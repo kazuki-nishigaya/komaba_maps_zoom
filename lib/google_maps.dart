@@ -20,10 +20,6 @@ Set<Marker> _createMarker() {
       markerId: MarkerId("destination"),
       position: LatLng(lat[num], long[num]),
     ),
-    /*Marker(
-      markerId: MarkerId('start'),
-      position: LatLng(35.6586634,139.6844907),
-    )*/
   };
 }
 
@@ -120,7 +116,6 @@ class _GoogleMapsState extends State<GoogleMaps> {
                     height:300,
                     width:MediaQuery.of(context).size.width,
                     padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
-
                     child:GoogleMap(
                       onMapCreated: _onMapCreated,
                       scrollGesturesEnabled: false,
