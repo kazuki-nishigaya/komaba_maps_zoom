@@ -57,11 +57,24 @@ class _GoogleMapsState extends State<GoogleMaps> {
   Map<PolylineId, Polyline> polylines = {};
   List<LatLng> polylineCoordinates = [];
   PolylinePoints polylinePoints = PolylinePoints();
-  String googleAPiKey = "AIzaSyDZZYAKL6CXCP6-UjD-E1DJPnzmFiZLcqA";
+  String googleAPiKey = "AIzaSyDSEFIrVbRPeaFm2W_585Sn07nTWqciPho";
+  Map<MarkerId, Marker> markers = {};
 
   @override
-  
 
+  @override
+  void initState() {
+    super.initState();
+
+    /// origin marker
+    _addMarker(LatLng(35.6587374,139.6840927), "origin",
+        BitmapDescriptor.defaultMarker);
+
+    /// destination marker
+    _addMarker(LatLng(lat[num],long[num]), "destination",
+        BitmapDescriptor.defaultMarkerWithHue(90));
+    _getPolyline();
+  }
   _addPolyLine() {
     PolylineId id = PolylineId("poly");
     Polyline polyline = Polyline(
@@ -70,14 +83,14 @@ class _GoogleMapsState extends State<GoogleMaps> {
     setState(() {});
   }
 
-  _getPolyline(slat,slong,glat,glong) async {
+  _getPolyline() async {
     PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-        googleAPiKey,
-        PointLatLng(slat, slong),
-        PointLatLng(glat, glong),
-        travelMode: TravelMode.walking,
-        //wayPoints: [PolylineWayPoint(location: "Sabo, Yaba Lagos Nigeria")]
-        );
+      googleAPiKey,
+      PointLatLng(35.6587374,139.6840927),
+      PointLatLng(lat[num],long[num]),
+      travelMode: TravelMode.walking,
+      //wayPoints: [PolylineWayPoint(location: "Sabo, Yaba Lagos Nigeria")]
+    );
     if (result.points.isNotEmpty) {
       result.points.forEach((PointLatLng point) {
         polylineCoordinates.add(LatLng(point.latitude, point.longitude));
@@ -85,107 +98,107 @@ class _GoogleMapsState extends State<GoogleMaps> {
     }
     _addPolyLine();
   }
+  _addMarker(LatLng position, String id, BitmapDescriptor descriptor) {
+    MarkerId markerId = MarkerId(id);
+    Marker marker =
+    Marker(
+        markerId: markerId, icon: descriptor, position: position,infoWindow: InfoWindow(title: destination)
+    );
+    markers[markerId] = marker;
+  }
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text("komaba_map"),
-        ),
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Container(
-              color: Colors.pink,
-              height:300,
-              width:MediaQuery.of(context).size.width,
-              padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
-              
-              child:GoogleMap(
-                onMapCreated: _onMapCreated,
-                scrollGesturesEnabled: false,
-                zoomControlsEnabled: false,
-                zoomGesturesEnabled: false,
-                myLocationEnabled: true,
-                markers: _createMarker(),
-                initialCameraPosition: const CameraPosition(  // 最初のカメラ位置
-                  target: LatLng(35.6603865, 139.6853525),
-                  bearing: 16,
-                  zoom: 16.002,                  
-                ),
-                polylines: Set<Polyline>.of(polylines.values),
-                //polylines: _polylines,
-                //polylines: Set<Polyline>.of(polylines.values),
-              ),
+        home: Scaffold(
+            appBar: AppBar(
+              title: Text("komaba_map"),
             ),
-            Container(
-              padding:EdgeInsets.fromLTRB(30, 20, 30, 0),
-              child:Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            body: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Flexible(child:
-                    TextFormField(
-                      controller: myController,
-                      decoration: const InputDecoration(
-                        icon: Icon(Icons.school),
-                        border: OutlineInputBorder(),
-                        hintText: 'どこへ行きますか?',
-                        labelText: '部屋番号 *',
+                  Container(
+                    color: Colors.pink,
+                    height:300,
+                    width:MediaQuery.of(context).size.width,
+                    padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+
+                    child:GoogleMap(
+                      onMapCreated: _onMapCreated,
+                      scrollGesturesEnabled: false,
+                      zoomControlsEnabled: false,
+                      zoomGesturesEnabled: false,
+                      myLocationEnabled: true,
+                      markers: _createMarker(),
+                      initialCameraPosition: const CameraPosition(  // 最初のカメラ位置
+                        target: LatLng(35.6603865, 139.6853525),
+                        bearing: 16,
+                        zoom: 16.002,
                       ),
-                      onSaved: (String? value) {
-                        // This optional block of code can be used to run
-                        // code when the user saves the form.
-                      },
-                    )
-                  ),
-                  Flexible(child:
-                    ElevatedButton(
-                      onPressed:  () {
-                        setState(() {
-                          if(roomToBuilding(myController.text)!=''){
-                            destination=roomToBuilding(myController.text);
-                            num=name.indexOf(destination);
-                          }else{
-                            destination='存在しない部屋です';
-                          }
-                          _getPolyline(35.6586634, 139.6844907, lat[num], long[num]);
-                          /*_polyline={};
-                          _polyline.add(Polyline(
-                            polylineId: PolylineId(destination),
-                            visible: true,
-                            points: [LatLng(35.6586634,139.6844907), LatLng(lat[num],long[num])],
-                            color: Colors.blue,
-                          ));*/
-                          //_createPolylines(35.6586634, 139.6844907, lat[num], long[num]);
-                        });
-                      },
-                      child: Text('Go!'),
-                    )
-                  ),
-                ]
-              )
-            ),
-            
-            Center(child:
-              Container(
-                padding:EdgeInsets.fromLTRB(30, 40, 30, 0),
-                child:Column(
-                  children: <Widget>[
-                    Text('あなたが向かうのは...'),
-                    Text(
-                      destination,
-                      style: 
-                        TextStyle(
-                          fontSize:50,
-                          color: Colors.red,
-                        )
+                      polylines: Set<Polyline>.of(polylines.values),
                     ),
-                  ]
-                )
-              )
+                  ),
+                  Container(
+                      padding:EdgeInsets.fromLTRB(30, 20, 30, 0),
+                      child:Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            Flexible(child:
+                            TextFormField(
+                              controller: myController,
+                              decoration: const InputDecoration(
+                                icon: Icon(Icons.school),
+                                border: OutlineInputBorder(),
+                                hintText: 'どこへ行きますか?',
+                                labelText: '部屋番号 *',
+                              ),
+                              onSaved: (String? value) {
+                                // This optional block of code can be used to run
+                                // code when the user saves the form.
+                              },
+                            )
+                            ),
+                            Flexible(child:
+                            ElevatedButton(
+                              onPressed:  () {
+                                setState(() {
+                                  if(roomToBuilding(myController.text)!=''){
+                                    destination=roomToBuilding(myController.text);
+                                    num=name.indexOf(destination);
+                                  }else{
+                                    destination='存在しない部屋です';
+                                  }
+                                  polylines = {};
+                                  polylineCoordinates = [];
+                                  _getPolyline();
+                                });
+                              },
+                              child: Text('Go!'),
+                            )
+                            ),
+                          ]
+                      )
+                  ),
+
+                  Center(child:
+                  Container(
+                      padding:EdgeInsets.fromLTRB(30, 40, 30, 0),
+                      child:Column(
+                          children: <Widget>[
+                            Text('あなたが向かうのは...'),
+                            Text(
+                                destination,
+                                style:
+                                TextStyle(
+                                  fontSize:50,
+                                  color: Colors.red,
+                                )
+                            ),
+                          ]
+                      )
+                  )
+                  )
+                ]
             )
-          ]
-        )  
-      )
+        )
     );
   }
 }
@@ -213,16 +226,16 @@ Map<String, String> rooms = {
   '多目的室4': 'コミュニケーションプラザ(北館)',
 };
 List<int> numroom=[101,102,103,104,105,106,107,108,109,
-                112,113,114,115,116,117,118,119,120,121,122,127,
-                149,150,151,152,153,154,155,156,157,158,159,
-                160,161,162,163,164,165,166,167,
-                184,185,186,187,188,189,191,192,
-                511,512,513,514,515,516,517,518,
-                521,522,523,524,525,531,532,533,534,
-                721,722,723,724,741,742,743,761,762,
-                1101,1102,1103,1105,1106,1107,1108,1109,
-                1211,1212,1213,1214,1221,1222,1223,1224,1225,1226,1231,1232,1233,
-                1311,1312,1313,1321,1322,1323,1331,1341];
+  112,113,114,115,116,117,118,119,120,121,122,127,
+  149,150,151,152,153,154,155,156,157,158,159,
+  160,161,162,163,164,165,166,167,
+  184,185,186,187,188,189,191,192,
+  511,512,513,514,515,516,517,518,
+  521,522,523,524,525,531,532,533,534,
+  721,722,723,724,741,742,743,761,762,
+  1101,1102,1103,1105,1106,1107,1108,1109,
+  1211,1212,1213,1214,1221,1222,1223,1224,1225,1226,1231,1232,1233,
+  1311,1312,1313,1321,1322,1323,1331,1341];
 
 String roomToBuilding(String room){
   String building='';
@@ -245,35 +258,6 @@ String roomToBuilding(String room){
 }
 
 /*
-Map<PolylineId, Polyline> polylines = {};
-  List<LatLng> polylineCoordinates = [];
-  PolylinePoints polylinePoints = PolylinePoints();
-  String googleAPiKey = "AIzaSyDZZYAKL6CXCP6-UjD-E1DJPnzmFiZLcqA";
-
-_addPolyLine() {
-    PolylineId id = PolylineId("poly");
-    Polyline polyline = Polyline(
-        polylineId: id, color: Colors.red, points: polylineCoordinates);
-    polylines[id] = polyline;
-    //setState(() {});
-  }
-
-  _getPolyline(slat,slong,glat,glong) async {
-    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-        googleAPiKey,
-        PointLatLng(slat, slong),
-        PointLatLng(glat, glong),
-        travelMode: TravelMode.driving,
-        //wayPoints: [PolylineWayPoint(location: "Sabo, Yaba Lagos Nigeria")]
-        );
-    if (result.points.isNotEmpty) {
-      result.points.forEach((PointLatLng point) {
-        polylineCoordinates.add(LatLng(point.latitude, point.longitude));
-      });
-    }
-    _addPolyLine();
-  }*/
-/*
 // Object for PolylinePoints
 PolylinePoints polylinePoints=PolylinePoints();
 
@@ -291,7 +275,7 @@ _createPolylines(slat,slong,glat,glong) async {
   // Generating the list of coordinates to be used for
   // drawing the polylines
   PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-    'AIzaSyDZZYAKL6CXCP6-UjD-E1DJPnzmFiZLcqA', // Google Maps API Key 
+    'AIzaSyDZZYAKL6CXCP6-UjD-E1DJPnzmFiZLcqA', // Google Maps API Key
     PointLatLng(slat, slong),
     PointLatLng(glat, glong),
     travelMode: TravelMode.transit,
