@@ -48,12 +48,11 @@ class _GoogleMapsState extends State<GoogleMaps> {
   void _onMapCreated(GoogleMapController controller) {
     _controller.complete(controller);
   }
-
   String dropdownValue='1号館';
   Map<PolylineId, Polyline> polylines = {};
   List<LatLng> polylineCoordinates = [];
   PolylinePoints polylinePoints = PolylinePoints();
-  String googleAPiKey = "AIzaSyDSEFIrVbRPeaFm2W_585Sn07nTWqciPho";
+  String googleAPiKey = "your_api_key";
   Map<MarkerId, Marker> markers = {};
 
   @override
@@ -70,6 +69,36 @@ class _GoogleMapsState extends State<GoogleMaps> {
     _addMarker(LatLng(lat[num],long[num]), "destination",
         BitmapDescriptor.defaultMarkerWithHue(90));
     _getPolyline();
+  }
+  /// go
+  _go(){
+    setState(() {
+      if(roomToBuilding(myController.text)!=''){
+        destination=roomToBuilding(myController.text);
+        num=name.indexOf(destination);
+      }else{
+        destination='存在しない部屋です';
+        num = 18;
+      }
+      polylines = {};
+      polylineCoordinates = [];
+      _getPolyline();
+    });
+  }
+  /// ズームボタン
+  double _zoom = 16.002;
+  _zoomButton(){
+    setState(() {
+      _zoom ++;
+      _go;
+    });
+  }
+  /// デバッグ用
+  int _counter = 0;
+  _incrementcounter(){
+    setState(() {
+      _counter ++;
+    });
   }
   _addPolyLine() {
     PolylineId id = PolylineId("poly");
@@ -105,6 +134,7 @@ class _GoogleMapsState extends State<GoogleMaps> {
   Widget build(BuildContext context) {
     return MaterialApp(
         home: Scaffold(
+            resizeToAvoidBottomInset: false,
             appBar: AppBar(
               title: Text("komaba_map"),
             ),
@@ -123,10 +153,10 @@ class _GoogleMapsState extends State<GoogleMaps> {
                       zoomGesturesEnabled: false,
                       myLocationEnabled: true,
                       markers: _createMarker(),
-                      initialCameraPosition: const CameraPosition(  // 最初のカメラ位置
+                      initialCameraPosition: CameraPosition(  // 最初のカメラ位置
                         target: LatLng(35.6603865, 139.6853525),
                         bearing: 16,
-                        zoom: 16.002,
+                        zoom: _zoom,
                       ),
                       polylines: Set<Polyline>.of(polylines.values),
                     ),
@@ -153,19 +183,7 @@ class _GoogleMapsState extends State<GoogleMaps> {
                             ),
                             Flexible(child:
                             ElevatedButton(
-                              onPressed:  () {
-                                setState(() {
-                                  if(roomToBuilding(myController.text)!=''){
-                                    destination=roomToBuilding(myController.text);
-                                    num=name.indexOf(destination);
-                                  }else{
-                                    destination='存在しない部屋です';
-                                  }
-                                  polylines = {};
-                                  polylineCoordinates = [];
-                                  _getPolyline();
-                                });
-                              },
+                              onPressed:_go,
                               child: Text('Go!'),
                             )
                             ),
@@ -192,7 +210,12 @@ class _GoogleMapsState extends State<GoogleMaps> {
                   )
                   )
                 ]
-            )
+            ),
+          floatingActionButton: FloatingActionButton.extended(
+            onPressed: _zoomButton,
+            label: Text("$_zoom"),
+          ),
+
         )
     );
   }
